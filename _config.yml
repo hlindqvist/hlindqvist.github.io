@@ -26,6 +26,13 @@ include: [CNAME]
 
 #plugins: [jekyll-paginate]
 
+plugins:
+ - jekyll-feed
+ - jekyll-seo-tag
+ - jekyll-paginate
+ - jekyll/tagging
+
+
 dash:
   # the way how dates should be displayed
   date_format: "%b %-d, %Y"
