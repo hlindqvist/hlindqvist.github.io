@@ -1,5 +1,13 @@
 theme: jekyll-dash
 
+title: hlindqvist
+author: Håkan Lindqvist
+email: hawk@qw.se
+description: > # this means to ignore newlines until "show_exerpts:"
+  Håkan is a software engineer and DNS fanatic living in Sweden.
+  He occasionally blogs about software, networking and related topics.
+show_excerpts: false # set to true to show excerpts on the homepage
+
 # required by disqus to display comments
 url: https://hakanlindqvist.com
 
@@ -44,9 +52,6 @@ dash:
     - url: https://twitter.com/HakanLindqvist
       icon: twitter-square
       color: cyan
-#    - url: https://bitbrain.itch.io
-#      icon: itch-io
-#      color: red
     - url: https://github.com/hlindqvist
       icon: github-square
       color: purple
