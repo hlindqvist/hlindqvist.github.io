@@ -56,12 +56,15 @@ dash:
   # generate social links in footer
   # supported colors: green, red, orange, blue, cyan, pink, teal, yellow, indigo, purple
   social_links:
-    - url: https://twitter.com/HakanLindqvist
-      icon: twitter-square
-      color: cyan
-    - url: https://github.com/hlindqvist
-      icon: github-square
+    - url: https://noc.social/@hlindqvist
+      icon: mastodon
       color: purple
+    - url: https://github.com/hlindqvist
+      icon: github
+      color: indigo
+    - url: https://twitter.com/HakanLindqvist
+      icon: twitter
+      color: cyan
 
   # wether the author box should be displayed or not
   show_author: true
