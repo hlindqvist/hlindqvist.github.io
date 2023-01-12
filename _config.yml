@@ -59,12 +59,15 @@ dash:
     - url: https://noc.social/@hlindqvist
       icon: mastodon
       color: purple
+      rel: me
     - url: https://github.com/hlindqvist
       icon: github
       color: indigo
+      rel: me
     - url: https://twitter.com/HakanLindqvist
       icon: twitter
       color: cyan
+      rel: me
 
   # wether the author box should be displayed or not
   show_author: true
