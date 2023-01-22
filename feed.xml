@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.3.2">Jekyll</generator><link href="https://hakanlindqvist.com/feed.xml" rel="self" type="application/atom+xml" /><link href="https://hakanlindqvist.com/" rel="alternate" type="text/html" /><updated>2023-01-22T19:23:06+00:00</updated><id>https://hakanlindqvist.com/feed.xml</id><title type="html">hlindqvist</title><subtitle>Håkan is a software engineer and DNS fanatic from Sweden. He occasionally blogs about software, networking and related topics.
+</subtitle><author><name>Håkan Lindqvist</name></author><entry><title type="html">PowerDNS Recursor RPZ with cacheable results</title><link href="https://hakanlindqvist.com/2022/12/26/powerdns-recursor-rpz.html" rel="alternate" type="text/html" title="PowerDNS Recursor RPZ with cacheable results" /><published>2022-12-26T00:00:00+00:00</published><updated>2022-12-26T00:00:00+00:00</updated><id>https://hakanlindqvist.com/2022/12/26/powerdns-recursor-rpz</id><content type="html" xml:base="https://hakanlindqvist.com/2022/12/26/powerdns-recursor-rpz.html"><![CDATA[<p>RPZ is a standardized and fairly convenient way of distributing and applying blocklists in standard nameserver software.
+For instance, you may have lists with domains used for malware, tracking, ads, etc, to block, much like specialized
+nameserver software such as PiHole does.</p>
+
+<p>Blocking names in DNS is not unproblematic, it is not a fool-proof way of blocking badness, it does not play nice
+with DNSSEC (however, the goal is to block, so even triggering a validation failure achieves the end goal), and can be used in abusive ways.<br />
+All that said, it can still certainly serve a purpose as a relatively unintrusive yet convenient layer of protection, and as long as it is used as a means of empowering the user, I at least don’t see an ethical problem.</p>
+
+<p>Setting up <a href="https://doc.powerdns.com/recursor/lua-config/rpz.html#configuring-rpz">RPZ in PowerDNS Recursor</a> is pretty straightforward through its Lua-based configuration. See the below example:</p>
+
+<p>recursor.conf:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>lua-config-file=/etc/powerdns/recursor.lua
+lua-dns-script=/etc/powerdns/dns.lua
+extended-resolution-errors=yes
+</code></pre></div></div>
+
+<p>recursor.lua:</p>
+<div class="language-lua highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">local</span> <span class="n">rpz_zones</span><span class="o">=</span><span class="p">{</span> <span class="s2">"adblocknocoin.hoshsadiq.rpz.qw.se"</span><span class="p">,</span> <span class="s2">"adguard.firebog.rpz.qw.se"</span><span class="p">,</span>
+<span class="s2">"adservers.anudeepnd.rpz.qw.se"</span><span class="p">,</span> <span class="s2">"easyprivacy.firebog.rpz.qw.se"</span><span class="p">,</span> <span class="s2">"hole.certpl.rpz.qw.se"</span><span class="p">,</span>
+<span class="s2">"hosts.stevenblack.rpz.qw.se"</span><span class="p">,</span> <span class="s2">"kadhosts.stevenblack.rpz.qw.se"</span><span class="p">,</span> <span class="s2">"notrack-blocklist.quidsup.rpz.qw.se"</span><span class="p">,</span>
+<span class="s2">"pgl.yoyo.rpz.qw.se"</span><span class="p">,</span> <span class="s2">"prigent-malware.firebog.rpz.qw.se"</span><span class="p">,</span> <span class="s2">"rpilist-malware.firebog.rpz.qw.se"</span><span class="p">,</span>
+<span class="s2">"rpilist-phishing.firebog.rpz.qw.se"</span><span class="p">,</span> <span class="s2">"rpz.oisd.nl.rpz.qw.se"</span><span class="p">,</span> <span class="s2">"simplead.disconnectme.rpz.qw.se"</span><span class="p">,</span>
+<span class="s2">"simpletracking.disconnectme.rpz.qw.se"</span><span class="p">,</span> <span class="s2">"urlhaus.abusech.rpz.qw.se"</span> <span class="p">}</span>
+
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">v</span> <span class="k">in</span> <span class="nb">ipairs</span><span class="p">(</span><span class="n">rpz_zones</span><span class="p">)</span> <span class="k">do</span>
+    <span class="n">rpzPrimary</span><span class="p">({</span> <span class="s2">"139.162.158.28"</span><span class="p">,</span> <span class="s2">"2a01:7e01::f03c:91ff:fee4:c68b"</span> <span class="p">},</span> <span class="n">v</span><span class="p">,</span> <span class="p">{</span> <span class="n">extendedErrorCode</span> <span class="o">=</span> <span class="mi">15</span><span class="p">,</span>
+<span class="n">extendedErrorExtra</span> <span class="o">=</span> <span class="s2">"Blocked by policy "</span> <span class="o">..</span> <span class="n">v</span><span class="p">,</span> <span class="n">dumpFile</span> <span class="o">=</span> <span class="s2">"/tmp/db."</span> <span class="o">..</span> <span class="n">v</span><span class="p">,</span> <span class="n">seedFile</span> <span class="o">=</span> <span class="s2">"/tmp/db."</span> <span class="o">..</span> <span class="n">v</span><span class="p">,</span>
+<span class="n">axfrTimeout</span><span class="o">=</span><span class="mi">60</span> <span class="p">})</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>This defines a list of RPZ zones to <code class="language-plaintext highlighter-rouge">AXFR</code>/<code class="language-plaintext highlighter-rouge">IXFR</code> from a server hosting some such zones, also defining an
+extended error code to include in responses for blocked names.</p>
+
+<p>What you will find, however, is that when PowerDNS Recursor applies an RPZ policy, it responds with empty <code class="language-plaintext highlighter-rouge">NXDOMAIN</code> messages (no <code class="language-plaintext highlighter-rouge">SOA</code>), while negative caching is done precisely based on the <code class="language-plaintext highlighter-rouge">SOA</code> record supposedly found in the <code class="language-plaintext highlighter-rouge">AUTHORITY</code> section of negative responses.<br />
+This makes for uncacheable responses (or at least with no control at all over any caching behavior that may exist), however, one can use the <a href="https://doc.powerdns.com/recursor/lua-scripting/hooks.html">Lua hooks for changing responses</a> to add a made-up <code class="language-plaintext highlighter-rouge">SOA</code> record that at least allows for specifying a TTL to control cache behavior.</p>
+
+<p>dns.lua:</p>
+<div class="language-lua highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">function</span> <span class="nf">nxdomain</span><span class="p">(</span><span class="n">dq</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">fixrpz</span><span class="p">(</span><span class="n">dq</span><span class="p">)</span>
+<span class="k">end</span>
+<span class="k">function</span> <span class="nf">nodata</span><span class="p">(</span><span class="n">dq</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">fixrpz</span><span class="p">(</span><span class="n">dq</span><span class="p">)</span>
+<span class="k">end</span>
+
+<span class="k">function</span> <span class="nf">fixrpz</span><span class="p">(</span><span class="n">dq</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">dq</span><span class="p">.</span><span class="n">appliedPolicy</span><span class="p">.</span><span class="n">policyKind</span> <span class="o">==</span> <span class="n">pdns</span><span class="p">.</span><span class="n">policykinds</span><span class="p">.</span><span class="n">NODATA</span> <span class="ow">or</span> <span class="n">dq</span><span class="p">.</span><span class="n">appliedPolicy</span><span class="p">.</span><span class="n">policyKind</span> <span class="o">==</span>
+<span class="n">pdns</span><span class="p">.</span><span class="n">policykinds</span><span class="p">.</span><span class="n">NXDOMAIN</span> <span class="k">then</span>
+        <span class="n">pdnslog</span><span class="p">(</span><span class="s2">"Intercepting RPZ NODATA/NXDOMAIN for: "</span><span class="o">..</span><span class="n">dq</span><span class="p">.</span><span class="n">qname</span><span class="p">:</span><span class="n">toString</span><span class="p">())</span>
+        <span class="k">if</span> <span class="n">dq</span><span class="p">.</span><span class="n">appliedPolicy</span><span class="p">.</span><span class="n">policyKind</span> <span class="o">==</span> <span class="n">pdns</span><span class="p">.</span><span class="n">policykinds</span><span class="p">.</span><span class="n">NODATA</span> <span class="k">then</span>
+            <span class="n">dq</span><span class="p">.</span><span class="n">rcode</span> <span class="o">=</span> <span class="n">pdns</span><span class="p">.</span><span class="n">NOERROR</span>
+        <span class="k">else</span>
+            <span class="n">dq</span><span class="p">.</span><span class="n">rcode</span> <span class="o">=</span> <span class="n">pdns</span><span class="p">.</span><span class="n">NXDOMAIN</span>
+        <span class="k">end</span>
+        <span class="n">dq</span><span class="p">:</span><span class="n">addRecord</span><span class="p">(</span><span class="n">pdns</span><span class="p">.</span><span class="n">SOA</span><span class="p">,</span> <span class="s2">"blocked.invalid. blocked.invalid. 1 1 1 1 600"</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">600</span><span class="p">)</span>
+        <span class="c1">-- 2 = AUTHORITY - https://docs.powerdns.com/recursor/lua-scripting/dnsrecord.html#DNSRecord.place</span>
+
+        <span class="n">dq</span><span class="p">.</span><span class="n">appliedPolicy</span><span class="p">.</span><span class="n">policyKind</span> <span class="o">=</span> <span class="n">pdns</span><span class="p">.</span><span class="n">policykinds</span><span class="p">.</span><span class="n">NoAction</span>
+        <span class="k">return</span> <span class="kc">true</span>
+    <span class="k">end</span>
+    <span class="k">return</span> <span class="kc">false</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>This overrides <code class="language-plaintext highlighter-rouge">NXDOMAIN</code>/<code class="language-plaintext highlighter-rouge">NODATA</code> responses that were introduced by RPZ so that they include an <code class="language-plaintext highlighter-rouge">SOA</code> record.</p>]]></content><author><name>Håkan Lindqvist</name></author><category term="dns" /><category term="powerdns" /><category term="powerdns-recursor" /><category term="rpz" /><summary type="html"><![CDATA[RPZ is a standardized and fairly convenient way of distributing and applying blocklists in standard nameserver software. For instance, you may have lists with domains used for malware, tracking, ads, etc, to block, much like specialized nameserver software such as PiHole does.]]></summary></entry></feed>
