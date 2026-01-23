@@ -1,4 +1,6 @@
-theme: jekyll-dash
+#theme: jekyll-dash
+# using remote-theme below to get latest from github
+
 
 title: hlindqvist
 author: Håkan Lindqvist
@@ -31,7 +33,9 @@ plugins:
  - jekyll-seo-tag
  - jekyll-paginate
  - jekyll/tagging
+ - jekyll-remote-theme
 
+remote_theme: bitbrain/jekyll-dash
 
 dash:
   # the way how dates should be displayed
